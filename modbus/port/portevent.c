@@ -19,42 +19,40 @@
  * File: $Id$
  */
 
-/* ----------------------- Platform includes --------------------------------*/
-#include "port.h"
-
 /* ----------------------- Modbus includes ----------------------------------*/
 #include "mb.h"
 #include "mbport.h"
 
-/* ----------------------- static functions ---------------------------------*/
-//static void prvvTIMERExpiredISR( void );
+/* ----------------------- Variables ----------------------------------------*/
+static eMBEventType eQueuedEvent;
+static BOOL     xEventInQueue;
 
 /* ----------------------- Start implementation -----------------------------*/
 BOOL
-xMBPortTimersInit( USHORT usTim1Timerout50us )
+xMBPortEventInit( void )
 {
-    return FALSE;
+    xEventInQueue = FALSE;
+    return TRUE;
 }
 
-
-inline void
-vMBPortTimersEnable(  )
+BOOL
+xMBPortEventPost( eMBEventType eEvent )
 {
-    /* Enable the timer with the timeout passed to xMBPortTimersInit( ) */
+    xEventInQueue = TRUE;
+    eQueuedEvent = eEvent;
+    return TRUE;
 }
 
-inline void
-vMBPortTimersDisable(  )
+BOOL
+xMBPortEventGet( eMBEventType * eEvent )
 {
-    /* Disable any pending timers. */
-}
+    BOOL            xEventHappened = FALSE;
 
-/* Create an ISR which is called whenever the timer has expired. This function
- * must then call pxMBPortCBTimerExpired( ) to notify the protocol stack that
- * the timer has expired.
-
-static void prvvTIMERExpiredISR( void )
-{
-    ( void )pxMBPortCBTimerExpired(  );
+    if( xEventInQueue )
+    {
+        *eEvent = eQueuedEvent;
+        xEventInQueue = FALSE;
+        xEventHappened = TRUE;
+    }
+    return xEventHappened;
 }
-*/

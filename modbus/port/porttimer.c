@@ -19,6 +19,8 @@
  * File: $Id$
  */
 
+#include "tim.h"
+
 /* ----------------------- Platform includes --------------------------------*/
 #include "port.h"
 
@@ -27,13 +29,17 @@
 #include "mbport.h"
 
 /* ----------------------- static functions ---------------------------------*/
-//static void prvvTIMERExpiredISR( void );
+static volatile  uint16_t timeout;
+static volatile uint16_t counter = 0;
+
 
 /* ----------------------- Start implementation -----------------------------*/
 BOOL
 xMBPortTimersInit( USHORT usTim1Timerout50us )
 {
-    return FALSE;
+	timeout = usTim1Timerout50us;
+	counter = 0;
+    return TRUE;
 }
 
 
@@ -41,20 +47,29 @@ inline void
 vMBPortTimersEnable(  )
 {
     /* Enable the timer with the timeout passed to xMBPortTimersInit( ) */
+	 counter = 0;
+	 HAL_TIM_Base_Start_IT(&htim4);
+
+	 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
 }
 
 inline void
 vMBPortTimersDisable(  )
 {
     /* Disable any pending timers. */
+	HAL_TIM_Base_Stop_IT(&htim4);
 }
 
 /* Create an ISR which is called whenever the timer has expired. This function
  * must then call pxMBPortCBTimerExpired( ) to notify the protocol stack that
  * the timer has expired.
+ */
 
-static void prvvTIMERExpiredISR( void )
+void HAL_TIM4_PeriodElapsedCallback()
 {
-    ( void )pxMBPortCBTimerExpired(  );
+  if(++counter >= timeout)
+  {
+		 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_RESET);
+	    ( void )pxMBPortCBTimerExpired(  );
+  }
 }
-*/
